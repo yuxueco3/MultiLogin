@@ -14,8 +14,11 @@ repositories {
 
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 dependencies {
@@ -25,8 +28,9 @@ dependencies {
 
     compileOnly 'io.netty:netty-all:4.1.86.Final'
     compileOnly 'net.minecrell:terminalconsoleappender:1.3.0'
-    compileOnly 'com.velocitypowered:velocity-api:3.5.0-SNAPSHOT'
-    compileOnly 'com.velocitypowered:velocity-proxy:3.5.0-SNAPSHOT'
+    compileOnly 'com.velocitypowered:velocity-api:4.3.1'
+    // velocity-proxy is not published to PaperMC Maven; it is built from the v4.3.1 tag.
+    compileOnly files("${rootDir}/velocity/libraries/velocity-proxy-4.3.1.jar")
 }
 
 
@@ -49,18 +53,36 @@ shadowJar {
 }
 
 def buildRoot = "${projectDir}/libraries/Velocity"
+def velocityRef = "v4.3.1"
 
 tasks.register('cloneVelocity') {
-    if (file(buildRoot).exists()) {
-        println "External library repo already exists. Upgrading."
-        exec {
-            workingDir = file(buildRoot)
-            commandLine "git", "pull"
-        }
-    } else {
-        println "Cloning Velocity repository..."
-        exec {
-            commandLine "git", "clone", "--depth", "1", "https://github.com/PaperMC/Velocity", buildRoot
+    doLast {
+        def tagRef = "refs/tags/${velocityRef}"
+        if (file("${buildRoot}/.git").exists()) {
+            def tagExists = project.providers.exec {
+                workingDir = file(buildRoot)
+                commandLine "git", "rev-parse", "-q", "--verify", tagRef
+            }.result.get().exitValue == 0
+            if (tagExists) {
+                println "Velocity ${velocityRef} already available locally, checking out."
+            } else {
+                println "Fetching Velocity ${velocityRef} (shallow)..."
+                project.providers.exec {
+                    workingDir = file(buildRoot)
+                    commandLine "git", "fetch", "--depth", "1", "origin", tagRef
+                }.result.get().assertNormalExitValue()
+            }
+            def checkoutRef = tagExists ? tagRef : "FETCH_HEAD"
+            project.providers.exec {
+                workingDir = file(buildRoot)
+                commandLine "git", "checkout", "--force", "--detach", checkoutRef
+            }.result.get().assertNormalExitValue()
+        } else {
+            println "Cloning Velocity ${velocityRef} (shallow)..."
+            project.providers.exec {
+                commandLine "git", "clone", "--depth", "1", "--single-branch", "--branch", velocityRef,
+                        "https://github.com/PaperMC/Velocity", buildRoot
+            }.result.get().assertNormalExitValue()
         }
     }
 }
@@ -76,23 +98,18 @@ tasks.register('buildVelocity', Exec) {
         workingDir = file("${buildRoot}")
     }
     def gradlewCmd = System.getProperty('os.name').toLowerCase().contains('win') ? "gradlew.bat" : "./gradlew"
-    commandLine "${buildRoot}/${gradlewCmd}", "publishToMavenLocal", "build", "--no-daemon", "--parallel", "-x", "test"
+    commandLine "${buildRoot}/${gradlewCmd}", ":velocity-proxy:jar", "--no-daemon", "--parallel", "-x", "test"
     doLast {
-        println "Velocity has been built."
+        println "Velocity proxy jar has been built."
     }
 }
 
 tasks.register('getLatestVelocity', Copy) {
     dependsOn 'buildVelocity'
-    println "Copying build artifacts..."
     from("${buildRoot}/proxy/build/libs") {
-        include "velocity-proxy-*-SNAPSHOT.jar"
+        include "velocity-proxy-4.3.1.jar"
     }
-    from("${buildRoot}/api/build/libs") {
-        include "velocity-api-*-SNAPSHOT.jar"
-    }
-    into "${buildRoot}/.."
-    println "Artifacts copied successfully."
+    into "${projectDir}/libraries"
 }
 
 artifacts {

@@ -5,16 +5,20 @@
 
 _✨ 正版与多种外置登录共存 ✨_
 
-[![GitHub license](https://img.shields.io/github/license/CaaMoe/MultiLogin?style=flat-square)](https://github.com/CaaMoe/MultiLogin/blob/master/LICENSE)
-[![QQ Group](https://img.shields.io/badge/QQ%20group-832210691-yellow?style=flat-square)](https://jq.qq.com/?_wv=1027&k=WrOTGIC7)
-[![Join our Discord](https://img.shields.io/discord/1225725211727499347.svg?logo=discord&label=)](https://discord.gg/9vh4kZRFCj)
-[![bStats](https://img.shields.io/bstats/servers/21890?color=brightgreen&label=bStats&logo=bs&style=flat-square)](https://bstats.org/plugin/velocity/MultiLogin/21890)
-
 </div>
 
-> [!CAUTION]
-> 🚧 本项目已停止维护, 因维护与问题修复成本过高, 不再建议继续使用.  
-> 可加入QQ交流群了解详细内幕和获取同类型需求的解决方案.
+> [!CAUTION]  
+> 这是一个非官方fork，尝试更新MultiLogin并使其在最新版Velocity上工作  
+> 只针对Voidix Network使用的Velocity版本进行适配，但尽力保持通用性    
+> 使用风险自负！
+
+## AI 生成代码说明
+
+本 fork 相对上游的新增与修改内容（包括构建脚本、Velocity 版本适配、CI 配置及文档）部分由 AI 辅助生成，并可能经过人工调整。
+
+- AI 生成的代码未经完整的人工审计与充分测试，可能存在错误、安全漏洞或兼容性问题。
+- 在生产环境使用前，请自行审查代码、验证功能并评估风险。
+- 本项目按“原样”提供，不对因使用 AI 生成内容而导致的任何直接或间接损失承担责任。
 
 ## 概述
 
@@ -30,11 +34,11 @@ MultiLogin 是一款主要为 Minecraft 代理端设计的插件，旨在实现�
 
 ## 安装
 
-最低需要 `Java 21`， 不需要安装 `authlib-injector` ，没有任何前置插件，也不需要添加和更改 `JVM` 参数
+最低需要 `Java 25`， 不需要安装 `authlib-injector` ，没有任何前置插件，也不需要添加和更改 `JVM` 参数
 
 ~~把大象装进冰箱需要几步？~~
 
-1. [下载](https://github.com/CaaMoe/MultiLogin/releases/latest) 插件
+1. 构建插件
 2. 丢进 plugins
 3. 启动服务器
 
@@ -48,25 +52,8 @@ MultiLogin 是一款主要为 Minecraft 代理端设计的插件，旨在实现�
 2. 执行 `./gradlew shadowJar` / `gradlew shadowJar`
 3. 在 `*/build/libs` 下寻找你需要的
 
-或者你也可以
-
-1. [Fork](https://github.com/CaaMoe/MultiLogin/fork) 此项目
-2. 开启 Actions
-3. 随便提交一个文件
-
-## BUG 汇报
-
-[Weekly Ver](https://github.com/CaaMoe/MultiLogin/releases/tag/weekly) 点击此处，也许你遇到的问题已修复
-
-[832210691](https://jq.qq.com/?_wv=1027&k=WrOTGIC7) 点击此处，来加入QQ交流群
-
-[new issue](https://github.com/CaaMoe/MultiLogin/issues/new) 点击此处，提交你的问题
-
-[Discord](https://discord.gg/HJXHCZRS) 进来聊聊你的问题
-## 贡献者
+## 原项目贡献者
 
 <a href="https://github.com/CaaMoe/MultiLogin/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=CaaMoe/MultiLogin"  alt="作者头像"/>
 </a>
-
-[我也想为贡献者之一？](https://github.com/CaaMoe/MultiLogin/pulls)

@@ -25,11 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JDK 21
+      - name: Setup JDK 25
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
           cache: gradle
 
       - name: Resolve release version
@@ -52,6 +52,9 @@ jobs:
 
       - name: Set plugin version
         run: sed -i "s/^plugin_version=.*/plugin_version=${RAW_VERSION}/" gradle.properties
+
+      - name: Prepare Velocity 4.3.1 proxy
+        run: ./gradlew --no-daemon getLatestVelocity
 
       - name: Build release artifacts
         run: ./gradlew --no-daemon shadowJar -Denv=final

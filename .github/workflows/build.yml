@@ -14,17 +14,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JDK 21
+      - name: Setup JDK 25
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
           cache: gradle
 
       - name: Patch Gradle Repositories
         run: |
           sed -i '/https:\/\/maven.aliyun.com\/repository\/public/d' repositories
           grep -q '^https:\/\/repo1.maven.org\/maven2$' repositories || echo 'https://repo1.maven.org/maven2' >> repositories
+
+      - name: Prepare Velocity 4.3.1 proxy
+        run: ./gradlew --no-daemon getLatestVelocity
 
       - name: Build and test
         run: ./gradlew --no-daemon test shadowJar

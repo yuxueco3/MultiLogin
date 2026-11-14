@@ -6,7 +6,7 @@ MultiLogin 是面向 **Minecraft Velocity 代理** 的 Java 插件（Gradle 多�
 
 ## 开发环境
 
-- **JDK 21**（必须）。本机用 `java -version` 确认。
+- **JDK 25**（必须，对应 Velocity 4.3.1 的 class 文件版本）。本机用 `java -version` 确认。
 - **构建工具**：仓库自带 `./gradlew`（Gradle Wrapper），无需全局安装 Gradle。
 - **Maven 仓库**：根目录 `repositories` 文件列出远程仓库；若依赖解析失败，可参考 `.github/workflows/build.yml` 中的 `Patch Gradle Repositories` 步骤（移除阿里云镜像、确保 Central 存在）。
 
@@ -34,6 +34,6 @@ MultiLogin 是面向 **Minecraft Velocity 代理** 的 Java 插件（Gradle 多�
 
 - **无需**在 update 脚本中启动 Velocity、MySQL 或任何游戏服；update 脚本只负责依赖刷新。
 - 若 `./gradlew` 首次下载依赖较慢，属正常现象；网络受限时可按 workflow 修补 `repositories` 后再构建。
-- **不要**依赖 `velocity/build.gradle` 中的 `cloneVelocity` / `getLatestVelocity` 做日常构建；CI 与常规开发均通过 Maven（`repo.papermc.io` 等）解析 Velocity API。
+- 日常本地构建不要每次都运行 `cloneVelocity` / `getLatestVelocity`；`velocity-api` 通过 Maven（`repo.papermc.io` 等）解析，`velocity-proxy` 需要从 Velocity `v4.3.1` 源码构建后放到 `velocity/libraries/velocity-proxy-4.3.1.jar`。CI 在构建前会自动执行 `./gradlew getLatestVelocity`：浅拉取 `v4.3.1` 目标提交并只构建 `:velocity-proxy:jar`。
 - 构建成功后，用 `ls velocity/build/libs/MultiLogin-Velocity-*.jar` 与 `unzip -p … velocity-plugin.json` 快速确认环境可用。
 - 项目 README 标明已停止维护；环境搭建目标仍是可编译、可打 JAR，而非部署生产代理。

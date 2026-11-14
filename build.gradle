@@ -3,11 +3,20 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import java.text.SimpleDateFormat
 
 
+
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.8.0' apply false
 }
 
 apply from: './constant.gradle'
+
+allprojects {
+    repositories {
+        mavenLocal()  // 优先使用本地仓库
+        mavenCentral()
+        // 其他仓库...
+    }
+}
 
 allprojects {
     apply plugin: "java"
@@ -103,10 +112,6 @@ subprojects {
     tasks.withType(JavaCompile).configureEach {
         options.encoding = "UTF-8"
         file.encoding = "UTF-8"
-    }
-
-    compileJava {
-        sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
