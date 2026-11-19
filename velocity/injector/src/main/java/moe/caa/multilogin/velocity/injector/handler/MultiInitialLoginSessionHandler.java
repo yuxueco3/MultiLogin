@@ -176,6 +176,14 @@ public class MultiInitialLoginSessionHandler {
 
             byte[] decryptedSharedSecret = EncryptionUtils.decryptRsa(serverKeyPair, packet.getSharedSecret());
 
+            // 4.3.1: 解密后立即启用加密，避免认证期间连接仍为明文
+            try {
+                this.mcConnection.enableEncryption(decryptedSharedSecret);
+            } catch (GeneralSecurityException e) {
+                LoggerProvider.getLogger().error("Unable to enable encryption for connection", e);
+                this.mcConnection.close(true);
+                return;
+            }
             encrypted = true;
             // 验证
             String username = login.getUsername();
@@ -185,52 +193,39 @@ public class MultiInitialLoginSessionHandler {
             multiCoreAPI.getPlugin().getRunServer().getScheduler().runTaskAsync(() -> {
                 LoginAuthResult result = (LoginAuthResult) multiCoreAPI.getAuthHandler().auth(username, serverId, playerIp);
                 try {
-                    if (mcConnection.getChannel().eventLoop().submit(() -> {
-                        if (this.mcConnection.isClosed()) return false;
+                    if (result.getResult() == AuthResult.Result.ALLOW) {
+                        GameProfile gameProfile = result.getResponse();
+
                         try {
-                            this.mcConnection.enableEncryption(decryptedSharedSecret);
-                            return true;
-                        } catch (GeneralSecurityException var8) {
-                            LoggerProvider.getLogger().error("Unable to enable encryption for connection", var8);
-                            this.mcConnection.close(true);
-                            return false;
-                        }
-                    }).get()) {
-                        if (result.getResult() == AuthResult.Result.ALLOW) {
-                            GameProfile gameProfile = result.getResponse();
-
-                            try {
-                                SkinRestorerResult restorerResult = multiCoreAPI.getSkinRestorerHandler().doRestorer(result);
-                                if (restorerResult.getThrowable() != null) {
-                                    LoggerProvider.getLogger().error("An exception occurred while processing the skin repair.", restorerResult.getThrowable());
-                                }
-                                LoggerProvider.getLogger().debug(String.format("Skin restore result of %s is %s.", result.getBaseServiceAuthenticationResult().getResponse().getName(), restorerResult.getReason()));
-
-                                if (restorerResult.getResponse() != null) {
-                                    gameProfile = restorerResult.getResponse();
-                                }
-                            } catch (Exception e) {
-                                LoggerProvider.getLogger().debug(String.format("Skin restore result of %s is %s.", result.getBaseServiceAuthenticationResult().getResponse().getName(), "error"));
-                                LoggerProvider.getLogger().debug("An exception occurred while processing the skin repair.", e);
+                            SkinRestorerResult restorerResult = multiCoreAPI.getSkinRestorerHandler().doRestorer(result);
+                            if (restorerResult.getThrowable() != null) {
+                                LoggerProvider.getLogger().error("An exception occurred while processing the skin repair.", restorerResult.getThrowable());
                             }
+                            LoggerProvider.getLogger().debug(String.format("Skin restore result of %s is %s.", result.getBaseServiceAuthenticationResult().getResponse().getName(), restorerResult.getReason()));
 
-                            GameProfile finalGameProfile = gameProfile;
-                            mcConnection.getChannel().eventLoop().submit(() -> {
-                                try {
-                                    this.mcConnection.setActiveSessionHandler(StateRegistry.LOGIN,
-                                            (AuthSessionHandler) authSessionHandler_allArgsConstructor.invoke(
-                                                    this.server, inbound, generateGameProfile(finalGameProfile), true, serverId
-                                            ));
-                                } catch (Throwable e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }).get();
-
-                        } else {
-                            this.inbound.disconnect(Component.text(result.getKickMessage()));
+                            if (restorerResult.getResponse() != null) {
+                                gameProfile = restorerResult.getResponse();
+                            }
+                        } catch (Exception e) {
+                            LoggerProvider.getLogger().debug(String.format("Skin restore result of %s is %s.", result.getBaseServiceAuthenticationResult().getResponse().getName(), "error"));
+                            LoggerProvider.getLogger().debug("An exception occurred while processing the skin repair.", e);
                         }
+
+                        GameProfile finalGameProfile = gameProfile;
+                        mcConnection.getChannel().eventLoop().submit(() -> {
+                            try {
+                                this.mcConnection.setActiveSessionHandler(StateRegistry.LOGIN,
+                                        (AuthSessionHandler) authSessionHandler_allArgsConstructor.invoke(
+                                                this.server, inbound, generateGameProfile(finalGameProfile), true, serverId
+                                        ));
+                            } catch (Throwable e) {
+                                throw new RuntimeException(e);
+                            }
+                        }).get();
+                    } else {
+                        this.inbound.disconnect(Component.text(result.getKickMessage()));
                     }
-                } catch (Throwable e){
+                } catch (Throwable e) {
                     LoggerProvider.getLogger().error("An exception occurred while processing validation results.", e);
                     if (isEncrypted()) {
                         getInbound().disconnect(Component.text(multiCoreAPI.getLanguageHandler().getMessage("auth_error")));
